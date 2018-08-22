@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    command: python  src/profiles_project/manage.py migrate --noinput
+    command: python  src/profiles_project/manage.py runserver 0.0.0.0:8000
+    volumes:
+      -  .:/code
+
+    ports:
+      - "8000:8000"
+
+
+    depends_on:
+      - db
+      - redis
+  db:
+    image: postgres
+
+  redis:
+    image: "redis:alpine"
+
+  celery:
+    build: .
+    command: bash -c "cd src/profiles_project && celery -A profiles_project worker -l info"
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - redis
+  celery-beat:
+    build: .
+    command:  bash -c "cd src/profiles_project && celery -A profiles_project beat -l info"
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - redis
+  #volumes:
+   # postgres_data:
+
